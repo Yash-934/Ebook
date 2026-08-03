@@ -9,6 +9,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -19,6 +21,9 @@ import com.example.ui.EbookViewModel
 import com.example.ui.EbookViewModelFactory
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.ReadScreen
+import com.example.ui.screens.SettingsScreen
+import com.example.ui.SettingsViewModel
+import com.example.ui.SettingsViewModelFactory
 import com.example.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
@@ -26,8 +31,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
-                val app = application as MyApplication
+            val app = application as MyApplication
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(app.settingsManager)
+            )
+            val isDarkTheme by settingsViewModel.darkModeEnabled.collectAsState()
+            
+            MyApplicationTheme(darkTheme = isDarkTheme) {
                 val ebookViewModel: EbookViewModel = viewModel(
                     factory = EbookViewModelFactory(app.repository)
                 )
@@ -54,6 +64,9 @@ class MainActivity : ComponentActivity() {
                                 ebookViewModel = ebookViewModel,
                                 onNavigateBack = { navController.popBackStack() }
                             )
+                        }
+                        composable("settings") {
+                            SettingsScreen(viewModel = settingsViewModel)
                         }
                     }
                 }

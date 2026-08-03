@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.example.data.AppDatabase
 import com.example.data.BookRepository
+import com.example.data.SettingsManager
 
 class MyApplication : Application() {
     val database by lazy {
@@ -11,5 +12,8 @@ class MyApplication : Application() {
     }
     val repository by lazy {
         BookRepository(database.bookDao())
+    }
+    val settingsManager by lazy {
+        SettingsManager(this)
     }
 }
