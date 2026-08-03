@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -12,9 +13,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.AutoStories
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,24 +27,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.R
 import com.example.data.Book
 import com.example.ui.AuthViewModel
 import com.example.ui.EbookViewModel
+import com.example.ui.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
     ebookViewModel: EbookViewModel,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
     val context = LocalContext.current
     val books by ebookViewModel.allBooks.collectAsState()
-    val user by authViewModel.currentUser.collectAsState()
-    val serverClientId = stringResource(R.string.default_web_client_id)
-    var searchQuery by remember { mutableStateOf("") }
+    var sortMode by remember { mutableStateOf("Recent") }
+    var showSettings by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -71,185 +73,166 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 48.dp, start = 16.dp, end = 16.dp, bottom = 8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Library",
-                        style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.ExtraBold)
-                    )
-                    Row {
-                        IconButton(onClick = { navController.navigate("settings") }) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
-                        }
-                        if (user == null) {
-                            TextButton(onClick = { authViewModel.signInWithGoogle(context, serverClientId) }) {
-                                Text("Sign In")
-                            }
-                        } else {
-                            IconButton(onClick = { authViewModel.signOut() }) {
-                                Icon(Icons.Default.Person, contentDescription = "Sign Out", tint = MaterialTheme.colorScheme.primary)
-                            }
-                        }
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.MenuBook, contentDescription = null, tint = Color(0xFFE53935))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("My Library", fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search your books...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    ),
-                    singleLine = true
-                )
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    filePickerLauncher.launch(arrayOf("application/pdf", "text/html", "text/markdown", "application/epub+zip", "*/*"))
                 },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Import Book")
-            }
+                actions = {
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color(0xFF4FC3F7))
+                    }
+                    Button(
+                        onClick = {
+                            filePickerLauncher.launch(arrayOf("application/pdf", "text/html", "text/markdown", "application/epub+zip", "*/*"))
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD89E36)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(end = 16.dp)
+                    ) {
+                        Text("+ Add Book", color = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+            )
         }
     ) { padding ->
-        if (books.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Book, 
-                        contentDescription = null, 
-                        modifier = Modifier.size(72.dp), 
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "Your library is empty", 
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Tap the + button to import books", 
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(Icons.Default.AutoStories, contentDescription = null, tint = Color.Gray)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Your Bookshelf", fontSize = 24.sp, fontWeight = FontWeight.Medium)
+            }
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Sort:", color = Color.Gray, modifier = Modifier.padding(end = 8.dp))
+                val modes = listOf("Recent", "Last Read", "Title")
+                modes.forEach { mode ->
+                    val isSelected = sortMode == mode
+                    Surface(
+                        modifier = Modifier.padding(end = 8.dp).clickable { sortMode = mode },
+                        color = if (isSelected) Color(0xFFD89E36) else Color.Transparent,
+                        shape = RoundedCornerShape(16.dp),
+                        border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray) else null
+                    ) {
+                        Text(
+                            text = mode,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = if (isSelected) Color.White else Color.Gray,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
-        } else {
-            val filteredBooks = books.filter { it.title.contains(searchQuery, ignoreCase = true) }
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 130.dp),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                modifier = Modifier.fillMaxSize().padding(padding)
-            ) {
-                items(filteredBooks) { book ->
-                    BookCard(book = book, onClick = { navController.navigate("read/${book.id}") })
+
+            if (books.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Your library is empty", color = Color.Gray)
+                }
+            } else {
+                val sortedBooks = when (sortMode) {
+                    "Title" -> books.sortedBy { it.title }
+                    else -> books.reversed()
+                }
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 150.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(sortedBooks) { book ->
+                        BookCard(book = book, onClick = { navController.navigate("read/${book.id}") })
+                    }
                 }
             }
         }
+    }
+    
+    if (showSettings) {
+        // Implement Settings Modal
+        SettingsSheet(settingsViewModel, onDismiss = { showSettings = false })
     }
 }
 
 @Composable
 fun BookCard(book: Book, onClick: () -> Unit) {
-    val cardColors = listOf(
-        Color(0xFF5C6BC0), // Indigo
-        Color(0xFF26A69A), // Teal
-        Color(0xFFEC407A), // Pink
-        Color(0xFFFFA726), // Orange
-        Color(0xFF66BB6A), // Green
-        Color(0xFF7E57C2)  // Deep Purple
-    )
-    val colorIndex = Math.abs(book.title.hashCode()) % cardColors.size
-    val coverColor = cardColors[colorIndex]
-
-    Column(modifier = Modifier.width(130.dp)) {
-        Card(
-            onClick = onClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.65f),
-            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-            colors = CardDefaults.cardColors(containerColor = coverColor)
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                // Book format badge
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(0.6f),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1EAD3)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(Color(0xFFEBE3D0)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.MenuBook,
+                    contentDescription = null,
+                    tint = Color(0xFFE57373),
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFF9F5EC))
+                    .padding(12.dp)
+            ) {
                 Surface(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                    shape = MaterialTheme.shapes.small
+                    color = Color(0xFFFFECB3),
+                    shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
                         text = book.format,
-                        color = Color.White,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFFF57F17),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
-
-                // Title centered on cover
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = book.title.substringBeforeLast("."),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = Color.White,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(16.dp)
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-
-                // Progress bar at the bottom of cover
-                if (book.progress > 0) {
-                    LinearProgressIndicator(
-                        progress = { book.progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(4.dp)
-                            .align(Alignment.BottomCenter),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        trackColor = Color.Black.copy(alpha = 0.2f)
-                    )
-                }
+                Text(
+                    text = "Unknown Author",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                LinearProgressIndicator(
+                    progress = { book.progress },
+                    modifier = Modifier.fillMaxWidth().height(4.dp),
+                    color = Color(0xFFD89E36),
+                    trackColor = Color(0xFFE0E0E0)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${(book.progress * 100).toInt()}% read",
+                    fontSize = 10.sp,
+                    color = Color.Gray
+                )
             }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = book.title,
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        if (book.progress > 0) {
-            val percentage = (book.progress * 100).toInt()
-            Text(
-                text = "$percentage% read",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

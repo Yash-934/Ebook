@@ -10,35 +10,35 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(private val settingsManager: SettingsManager) : ViewModel() {
-    val darkModeEnabled: StateFlow<Boolean> = settingsManager.darkModeFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = false
+    val themeIndex: StateFlow<Int> = settingsManager.themeIndexFlow.stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 2
     )
-
-    val cloudSyncEnabled: StateFlow<Boolean> = settingsManager.cloudSyncFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = true
+    val fontFamilyIndex: StateFlow<Int> = settingsManager.fontFamilyIndexFlow.stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 0
     )
-
     val fontSize: StateFlow<Float> = settingsManager.fontSizeFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = 16f
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 16f
+    )
+    val lineSpacing: StateFlow<Float> = settingsManager.lineSpacingFlow.stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 1.5f
+    )
+    val wordSpacing: StateFlow<Float> = settingsManager.wordSpacingFlow.stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 0f
+    )
+    val margins: StateFlow<Float> = settingsManager.marginsFlow.stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = 24f
+    )
+    val scrollMode: StateFlow<Boolean> = settingsManager.scrollModeFlow.stateIn(
+        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = true
     )
 
-    fun toggleDarkMode(enabled: Boolean) {
-        viewModelScope.launch { settingsManager.setDarkMode(enabled) }
-    }
-
-    fun toggleCloudSync(enabled: Boolean) {
-        viewModelScope.launch { settingsManager.setCloudSync(enabled) }
-    }
-
-    fun setFontSize(size: Float) {
-        viewModelScope.launch { settingsManager.setFontSize(size) }
-    }
+    fun setThemeIndex(index: Int) { viewModelScope.launch { settingsManager.setThemeIndex(index) } }
+    fun setFontFamilyIndex(index: Int) { viewModelScope.launch { settingsManager.setFontFamilyIndex(index) } }
+    fun setFontSize(size: Float) { viewModelScope.launch { settingsManager.setFontSize(size) } }
+    fun setLineSpacing(spacing: Float) { viewModelScope.launch { settingsManager.setLineSpacing(spacing) } }
+    fun setWordSpacing(spacing: Float) { viewModelScope.launch { settingsManager.setWordSpacing(spacing) } }
+    fun setMargins(margin: Float) { viewModelScope.launch { settingsManager.setMargins(margin) } }
+    fun setScrollMode(scroll: Boolean) { viewModelScope.launch { settingsManager.setScrollMode(scroll) } }
 }
 
 class SettingsViewModelFactory(private val settingsManager: SettingsManager) : ViewModelProvider.Factory {

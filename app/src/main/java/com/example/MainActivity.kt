@@ -1,7 +1,5 @@
 package com.example
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,9 +33,9 @@ class MainActivity : ComponentActivity() {
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = SettingsViewModelFactory(app.settingsManager)
             )
-            val isDarkTheme by settingsViewModel.darkModeEnabled.collectAsState()
+            val themeIndex by settingsViewModel.themeIndex.collectAsState()
             
-            MyApplicationTheme(darkTheme = isDarkTheme) {
+            MyApplicationTheme(themeIndex = themeIndex) {
                 val ebookViewModel: EbookViewModel = viewModel(
                     factory = EbookViewModelFactory(app.repository)
                 )
@@ -54,7 +52,8 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(
                                 navController = navController,
                                 ebookViewModel = ebookViewModel,
-                                authViewModel = authViewModel
+                                authViewModel = authViewModel,
+                                settingsViewModel = settingsViewModel
                             )
                         }
                         composable("read/{bookId}") { backStackEntry ->
@@ -62,6 +61,7 @@ class MainActivity : ComponentActivity() {
                             ReadScreen(
                                 bookId = bookId,
                                 ebookViewModel = ebookViewModel,
+                                settingsViewModel = settingsViewModel,
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }
@@ -74,4 +74,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
