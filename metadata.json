@@ -1,0 +1,6 @@
+{
+  "name": "Ebook Reader",
+  "description": "An ebook reader app with support for HTML, MD, PDF, and EPUB formats, offline mode, and cross-device sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
