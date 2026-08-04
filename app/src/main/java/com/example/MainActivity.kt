@@ -52,12 +52,14 @@ class MainActivity : ComponentActivity() {
                                 settingsViewModel = settingsViewModel
                             )
                         }
-                        composable("read/{bookId}") { backStackEntry ->
+                        composable("read/{bookId}?scrollTo={scrollTo}") { backStackEntry ->
                             val bookId = backStackEntry.arguments?.getString("bookId")?.toIntOrNull() ?: 0
+                            val scrollTo = backStackEntry.arguments?.getString("scrollTo")?.toIntOrNull()
                             ReadScreen(
                                 bookId = bookId,
                                 ebookViewModel = ebookViewModel,
                                 settingsViewModel = settingsViewModel,
+                                scrollTo = scrollTo,
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }

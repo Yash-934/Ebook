@@ -15,7 +15,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.FormatLineSpacing
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpaceBar
@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.FontDownload
 import androidx.compose.material.icons.outlined.FormatLineSpacing
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.Straighten
 import androidx.compose.material.icons.outlined.TextFormat
@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.SettingsViewModel
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +51,14 @@ fun SettingsDrawerContent(
     onClose: () -> Unit
 ) {
     val themeIndex by settingsViewModel.themeIndex.collectAsState()
+    val fontFamilyIndex by settingsViewModel.fontFamilyIndex.collectAsState()
+    val fontSize by settingsViewModel.fontSize.collectAsState()
+    val lineSpacing by settingsViewModel.lineSpacing.collectAsState()
+    val wordSpacing by settingsViewModel.wordSpacing.collectAsState()
+    val margins by settingsViewModel.margins.collectAsState()
+    val scrollMode by settingsViewModel.scrollMode.collectAsState()
+
+    val fontFamilies = listOf("Sans-Serif", "Serif", "Monospace")
 
     Column(
         modifier = Modifier
@@ -104,7 +113,10 @@ fun SettingsDrawerContent(
             // FONT FAMILY
             SettingsHeader(icon = Icons.Outlined.TextFormat, title = "FONT FAMILY")
             OutlinedButton(
-                onClick = { /* TODO */ },
+                onClick = {
+                    val nextIndex = (fontFamilyIndex + 1) % fontFamilies.size
+                    settingsViewModel.setFontFamily(nextIndex)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp, bottom = 24.dp),
@@ -115,16 +127,17 @@ fun SettingsDrawerContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Serif (Georgia)", fontSize = 16.sp)
+                    Text(fontFamilies.getOrElse(fontFamilyIndex) { "Sans-Serif" }, fontSize = 16.sp)
                     Icon(Icons.Default.VerticalAlignBottom, contentDescription = null, modifier = Modifier.size(20.dp))
                 }
             }
 
             // FONT SIZE
-            SettingsHeader(icon = Icons.Outlined.Straighten, title = "FONT SIZE: 12PX")
+            SettingsHeader(icon = Icons.Outlined.Straighten, title = "FONT SIZE: ${fontSize.roundToInt()}PX")
             Slider(
-                value = 0.3f,
-                onValueChange = { },
+                value = fontSize,
+                onValueChange = { settingsViewModel.setFontSize(it) },
+                valueRange = 10f..40f,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -134,10 +147,11 @@ fun SettingsDrawerContent(
             )
 
             // LINE SPACING
-            SettingsHeader(icon = Icons.Outlined.FormatLineSpacing, title = "LINE SPACING: 1.7")
+            SettingsHeader(icon = Icons.Outlined.FormatLineSpacing, title = "LINE SPACING: ${String.format("%.1f", lineSpacing)}")
             Slider(
-                value = 0.5f,
-                onValueChange = { },
+                value = lineSpacing,
+                onValueChange = { settingsViewModel.setLineSpacing(it) },
+                valueRange = 1.0f..3.0f,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -147,10 +161,11 @@ fun SettingsDrawerContent(
             )
 
             // WORD SPACING
-            SettingsHeader(icon = Icons.Default.SpaceBar, title = "WORD SPACING: 0PX")
+            SettingsHeader(icon = Icons.Default.SpaceBar, title = "WORD SPACING: ${wordSpacing.roundToInt()}PX")
             Slider(
-                value = 0.1f,
-                onValueChange = { },
+                value = wordSpacing,
+                onValueChange = { settingsViewModel.setWordSpacing(it) },
+                valueRange = 0f..20f,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -160,10 +175,11 @@ fun SettingsDrawerContent(
             )
 
             // MARGINS
-            SettingsHeader(icon = Icons.Outlined.MenuBook, title = "MARGINS: 35PX")
+            SettingsHeader(icon = Icons.AutoMirrored.Outlined.MenuBook, title = "MARGINS: ${margins.roundToInt()}PX")
             Slider(
-                value = 0.6f,
-                onValueChange = { },
+                value = margins,
+                onValueChange = { settingsViewModel.setMargins(it) },
+                valueRange = 0f..100f,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
                     activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -173,9 +189,9 @@ fun SettingsDrawerContent(
             )
 
             // READING MODE
-            SettingsHeader(icon = Icons.Outlined.MenuBook, title = "READING MODE")
+            SettingsHeader(icon = Icons.AutoMirrored.Outlined.MenuBook, title = "READING MODE")
             OutlinedButton(
-                onClick = { /* TODO */ },
+                onClick = { settingsViewModel.setScrollMode(!scrollMode) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp, bottom = 24.dp),
@@ -183,9 +199,9 @@ fun SettingsDrawerContent(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onBackground),
                 border = BorderUtils.border(MaterialTheme.colorScheme.primary)
             ) {
-                Icon(Icons.Outlined.MenuBook, contentDescription = null, tint = Color(0xFFD2B48C), modifier = Modifier.size(20.dp))
+                Icon(Icons.AutoMirrored.Outlined.MenuBook, contentDescription = null, tint = Color(0xFFD2B48C), modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Scroll Mode", fontSize = 16.sp)
+                Text(if (scrollMode) "Scroll Mode" else "Paginated Mode", fontSize = 16.sp)
             }
 
             // DATA MANAGEMENT
@@ -216,7 +232,7 @@ fun SettingsDrawerContent(
                 Text("Import Data")
             }
             Button(
-                onClick = { /* TODO */ },
+                onClick = { /* TODO: Hook to clear books in ViewModel */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),

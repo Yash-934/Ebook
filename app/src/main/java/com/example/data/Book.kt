@@ -12,5 +12,10 @@ data class Book(
     val localUri: String = "",
     val remoteId: String = "",
     val progress: Float = 0f,
-    val lastRead: Long = System.currentTimeMillis()
+    val coverUri: String = "",
+    val lastRead: Long = System.currentTimeMillis(),
+    val isFavorite: Boolean = false,
+    val folder: String = "Main",
+    val annotations: String = "[]",
+    val bookmarks: String = "[]"
 )

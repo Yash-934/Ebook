@@ -1,0 +1,3 @@
+#!/bin/bash
+sed -i 's/import androidx.compose.material.icons.filled.Bookmark/import androidx.compose.material.icons.filled.Favorite\nimport androidx.compose.material.icons.filled.FavoriteBorder\nimport androidx.compose.material.icons.filled.Bookmark\nimport androidx.compose.material.icons.filled.Edit\nimport androidx.compose.material.icons.filled.Brush\nimport androidx.compose.material.icons.filled.BorderColor\nimport androidx.compose.material.icons.filled.FormatUnderlined/' app/src/main/java/com/example/ui/screens/ReadScreen.kt
+sed -i 's/var isBookmarked by remember { mutableStateOf(false) }/var isFavorite by remember { mutableStateOf(false) }\n    var showEditTools by remember { mutableStateOf(false) }/' app/src/main/java/com/example/ui/screens/ReadScreen.kt

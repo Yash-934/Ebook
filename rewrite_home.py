@@ -1,4 +1,6 @@
-package com.example.ui.screens
+import os
+
+content = """package com.example.ui.screens
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,28 +13,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import org.json.JSONArray
-import org.json.JSONObject
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -56,7 +50,7 @@ val GreyText = Color(0xFF8C7F70)
 val DividerColor = Color(0xFFE0D5C1)
 val SettingsBg = Color(0xFFF5EFE6)
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -69,7 +63,6 @@ fun HomeScreen(
     var selectedFolder by remember { mutableStateOf("All") }
     var showNewFolderDialog by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
-    var customFolders by remember { mutableStateOf(setOf<String>()) }
     
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -164,21 +157,20 @@ fun HomeScreen(
                 }
 
                 // Sort row
-                FlowRow(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 16.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Sort:", color = GreyText, fontSize = 18.sp, modifier = Modifier.padding(end = 4.dp).align(Alignment.CenterVertically))
+                    Text("Sort:", color = GreyText, fontSize = 18.sp, modifier = Modifier.padding(end = 4.dp))
                     
                     val filters = listOf(
                         "Recent" to "🕐",
                         "Last Read" to "📖",
-                        "Title" to "🔤",
-                        "Favorites" to "❤️",
-                        "Bookmarks" to "🔖"
+                        "Title" to "🔤"
                     )
                     
                     filters.forEach { (filterName, emoji) ->
@@ -200,20 +192,19 @@ fun HomeScreen(
                 }
                 
                 // Folders row
-                val folders = remember(booksFlow, customFolders) {
-                    val dbFolders = booksFlow.map { it.folder }
-                    val allFolders = (dbFolders + customFolders).filter { it.isNotBlank() && it != "All" }.distinct().sorted()
-                    listOf("All") + allFolders
+                val folders = remember(booksFlow) {
+                    listOf("All") + booksFlow.map { it.folder }.distinct().filter { it.isNotBlank() && it != "All" }.sorted()
                 }
 
-                FlowRow(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Folder:", color = GreyText, fontSize = 18.sp, modifier = Modifier.padding(end = 4.dp).align(Alignment.CenterVertically))
+                    Text("Folder:", color = GreyText, fontSize = 18.sp, modifier = Modifier.padding(end = 4.dp))
                     folders.forEach { folderName ->
                         val isSelected = selectedFolder == folderName
                         FilterChip(
@@ -248,67 +239,23 @@ fun HomeScreen(
                 val books = when (selectedFilter) {
                     "Title" -> filteredBooks.sortedBy { it.title }
                     "Last Read" -> filteredBooks.sortedByDescending { it.lastRead }
-                    "Favorites" -> filteredBooks.filter { it.isFavorite }
-                    "Bookmarks" -> filteredBooks.filter { try { org.json.JSONArray(it.bookmarks).length() > 0 } catch(e: Exception) { false } }
                     else -> filteredBooks.sortedByDescending { it.id }
                 }
 
-                if (selectedFilter == "Bookmarks") {
-                    androidx.compose.foundation.lazy.LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(books) { book ->
-                            Column(modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(12.dp)).border(1.dp, DividerColor, RoundedCornerShape(12.dp)).padding(16.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    Box(modifier = Modifier.height(180.dp).width(120.dp)) {
-                                        BookItem(
-                                            book = book,
-                                            onClick = { navController.navigate("read/${book.id}") },
-                                            onDelete = { ebookViewModel.deleteBook(book.id) },
-                                            onUpdateCover = { ebookViewModel.updateBookCover(book.id, it) }
-                                        )
-                                    }
-                                    Column {
-                                        Text(book.title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = BrownText)
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        val bookmarksArray = try { org.json.JSONArray(book.bookmarks) } catch(e:Exception){ org.json.JSONArray() }
-                                        for (i in 0 until bookmarksArray.length()) {
-                                            val bm = bookmarksArray.getJSONObject(i)
-                                            val pos = bm.getInt("position")
-                                            val name = bm.optString("name", "Bookmark at $pos")
-                                            Row(modifier = Modifier.fillMaxWidth().clickable {
-                                                navController.navigate("read/${book.id}?scrollTo=$pos")
-                                            }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                                Box(modifier = Modifier.size(24.dp).background(GoldenOrange, CircleShape), contentAlignment = Alignment.Center) {
-                                                    Text("${i+1}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                                }
-                                                Spacer(modifier = Modifier.width(12.dp))
-                                                Text(name, color = BrownText, fontSize = 14.sp)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(150.dp),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(books) { book ->
-                            BookItem(
-                                book = book,
-                                onClick = { navController.navigate("read/${book.id}") },
-                                onDelete = { ebookViewModel.deleteBook(book.id) },
-                                onUpdateCover = { ebookViewModel.updateBookCover(book.id, it) }
-                            )
-                        }
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(150.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(books) { book ->
+                        BookItem(
+                            book = book,
+                            onClick = { navController.navigate("read/${book.id}") },
+                            onDelete = { ebookViewModel.deleteBook(book.id) },
+                            onUpdateCover = { ebookViewModel.updateBookCover(book.id, it) }
+                        )
                     }
                 }
             }
@@ -340,7 +287,6 @@ fun HomeScreen(
                     Button(
                         onClick = {
                             if (newFolderName.isNotBlank()) {
-                                customFolders = customFolders + newFolderName
                                 selectedFolder = newFolderName
                                 showNewFolderDialog = false
                                 newFolderName = ""
@@ -420,37 +366,6 @@ fun BookItem(
                             text = "📖",
                             fontSize = 64.sp
                         )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val isBookmarked = try { org.json.JSONArray(book.bookmarks).length() > 0 } catch(e:Exception){ false }
-                        if (book.isFavorite) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(end = if (isBookmarked) 4.dp else 0.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.8f))
-                                    .padding(4.dp)
-                            ) {
-                                Icon(Icons.Default.Favorite, contentDescription = "Favorite", tint = Color(0xFFFF5252), modifier = Modifier.size(16.dp))
-                            }
-                        }
-                        if (isBookmarked) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.8f))
-                                    .padding(4.dp)
-                            ) {
-                                Icon(Icons.Default.Bookmark, contentDescription = "Bookmark", tint = Color(0xFFFFA500), modifier = Modifier.size(16.dp))
-                            }
-                        }
                     }
                 }
                 
@@ -611,3 +526,7 @@ fun AddBookOptionsDialog(
         containerColor = LightCream
     )
 }
+"""
+
+with open("app/src/main/java/com/example/ui/screens/HomeScreen.kt", "w") as f:
+    f.write(content)

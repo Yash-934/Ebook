@@ -1,0 +1,5 @@
+                                        currentLineColor = when (activeEditTool) {
+                                            "highlight" -> highlightColor
+                                            "underline" -> underlineColor
+                                            else -> doodleColor
+                                        }

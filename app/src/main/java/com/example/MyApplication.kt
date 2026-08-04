@@ -8,7 +8,7 @@ import com.example.data.SettingsManager
 
 class MyApplication : Application() {
     val database by lazy {
-        Room.databaseBuilder(this, AppDatabase::class.java, "ebook_database").build()
+        Room.databaseBuilder(this, AppDatabase::class.java, "ebook_database").fallbackToDestructiveMigration().build()
     }
     val repository by lazy {
         BookRepository(database.bookDao())

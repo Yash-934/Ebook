@@ -1,0 +1,2 @@
+#!/bin/bash
+sed -i 's/var showEditTools by remember { mutableStateOf(false) }/&\n    var activeEditTool by remember { mutableStateOf<String?>(null) }\n    val drawnLines = remember { androidx.compose.runtime.mutableStateListOf<DrawnLine>() }\n    var currentPath by remember { mutableStateOf<Path?>(null) }\n    var currentLineColor by remember { mutableStateOf(Color.Black) }\n    var currentStrokeWidth by remember { mutableStateOf(5f) }\n    var currentAlpha by remember { mutableStateOf(1f) }/' app/src/main/java/com/example/ui/screens/ReadScreen.kt
